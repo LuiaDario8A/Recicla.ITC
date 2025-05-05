@@ -14,12 +14,15 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-// Secciones
+// UI Elements
 const loginSection = document.getElementById("login-section");
 const registerSection = document.getElementById("register-section");
 const classificationSection = document.getElementById("classification-section");
+const loginBtn = document.getElementById("login-btn");
+const registerBtn = document.getElementById("register-btn");
+const logoutBtn = document.getElementById("logout-btn");
 
-// Botones
+// Eventos de cambio entre login y registro
 document.getElementById("show-register").addEventListener("click", () => {
     loginSection.style.display = "none";
     registerSection.style.display = "block";
@@ -29,29 +32,31 @@ document.getElementById("show-login").addEventListener("click", () => {
     loginSection.style.display = "block";
 });
 
-document.getElementById("register-btn").addEventListener("click", () => {
+// Registro
+registerBtn.addEventListener("click", () => {
     const email = document.getElementById("register-email").value;
     const password = document.getElementById("register-password").value;
-
     auth.createUserWithEmailAndPassword(email, password)
         .then(() => {
-            alert("Registro exitoso.");
+            alert("Registrado correctamente");
         })
-        .catch(err => alert(err.message));
+        .catch(error => alert(error.message));
 });
 
-document.getElementById("login-btn").addEventListener("click", () => {
+// Login
+loginBtn.addEventListener("click", () => {
     const email = document.getElementById("login-email").value;
     const password = document.getElementById("login-password").value;
-
     auth.signInWithEmailAndPassword(email, password)
-        .catch(err => alert(err.message));
+        .catch(error => alert(error.message));
 });
 
-document.getElementById("logout-btn").addEventListener("click", () => {
+// Logout
+logoutBtn.addEventListener("click", () => {
     auth.signOut();
 });
 
+// Auth state
 auth.onAuthStateChanged(user => {
     if (user) {
         loginSection.style.display = "none";
@@ -64,54 +69,67 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// Cámara
+// Activar cámara
 const video = document.getElementById("camera");
-navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
         video.srcObject = stream;
     })
-    .catch(err => console.error("Error cámara:", err));
+    .catch(err => {
+        console.error("Error al acceder a la cámara:", err);
+    });
 
 // Teachable Machine
-const URL = "https://teachablemachine.withgoogle.com/models/Bd2P5VBit/";
+const modelURL = "https://teachablemachine.withgoogle.com/models/Bd2P5VBit/";
 let model, webcam, labelContainer, maxPredictions;
 
-async function initModel() {
-    const modelURL = URL + "model.json";
+async function loadModel() {
+    const URL = modelURL;
+    const modelURLJSON = URL + "model.json";
     const metadataURL = URL + "metadata.json";
-    model = await tmImage.load(modelURL, metadataURL);
+
+    model = await tmImage.load(modelURLJSON, metadataURL);
+    console.log("Modelo cargado");
 }
+loadModel();
 
-initModel();
+document.getElementById("capture-btn").addEventListener("click", async () => {
+    if (!model) {
+        alert("El modelo aún no se ha cargado.");
+        return;
+    }
 
-async function classifyImage() {
+    // Crear un canvas y capturar frame de video
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    const context = canvas.getContext("2d");
-    context.drawImage(video, 0, 0);
+    canvas.getContext("2d").drawImage(video, 0, 0);
 
+    // Clasificar imagen
     const prediction = await model.predict(canvas);
-    const topPrediction = prediction.sort((a, b) => b.probability - a.probability)[0];
+    const sorted = prediction.sort((a, b) => b.probability - a.probability);
+    const best = sorted[0];
 
-    const material = topPrediction.className;
+    const material = best.className;
+    const result = document.getElementById("classification-result");
+    const suggestion = document.getElementById("bin-suggestion");
+
+    result.textContent = `Resultado: ${material}`;
     let bin = "Desconocido";
     if (material === "Papel") bin = "Papel";
     else if (material === "Plástico") bin = "Plásticos";
     else if (material === "Metal") bin = "Metales";
 
-    document.getElementById("classification-result").textContent = `Resultado: ${material}`;
-    document.getElementById("bin-suggestion").textContent = `Bótalo en: ${bin}`;
+    suggestion.textContent = `Bótalo en: ${bin}`;
 
+    // Guardar en Firebase
     const user = auth.currentUser;
     if (user) {
-        const recordRef = db.ref(`usuarios/${user.uid}/residuos`).push();
-        recordRef.set({
+        const ref = db.ref(`usuarios/${user.uid}/residuos`).push();
+        ref.set({
             material,
             bin,
             timestamp: new Date().toISOString()
         });
     }
-}
-
-document.getElementById("capture-btn").addEventListener("click", classifyImage);
+});
