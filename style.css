@@ -23,7 +23,7 @@ h1 {
     color: #155724;
 }
 
-main {
+main, section {
     background-color: white;
     padding: 20px;
     border-radius: 10px;
@@ -33,10 +33,12 @@ main {
     text-align: center;
 }
 
-input {
-    width: 90%;
-    padding: 10px;
-    margin: 5px 0;
+#camera {
+    width: 100%;
+    max-width: 300px;
+    border: 2px solid #155724;
+    border-radius: 5px;
+    margin-top: 10px;
 }
 
 button {
@@ -51,14 +53,6 @@ button {
 
 button:hover {
     background-color: #218838;
-}
-
-video {
-    width: 100%;
-    max-width: 300px;
-    border: 2px solid #155724;
-    border-radius: 5px;
-    margin-top: 10px;
 }
 
 #classification-result, #bin-suggestion {
