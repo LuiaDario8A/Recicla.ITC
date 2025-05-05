@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reciclaje Inteligente</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css">
 
     <!-- Firebase v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -14,7 +14,7 @@
     <!-- Teachable Machine -->
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
-    <script src="script.js" defer></script>
+    <script defer src="script.js"></script>
 </head>
 <body>
 
@@ -22,32 +22,34 @@
         <h1>Reciclaje Inteligente</h1>
     </header>
 
-    <!-- LOGIN -->
-    <section id="login-section">
-        <h2>Iniciar Sesión</h2>
-        <input type="email" id="login-email" placeholder="Correo electrónico">
-        <input type="password" id="login-password" placeholder="Contraseña">
-        <button id="login-btn">Iniciar sesión</button>
-        <p>¿No tienes cuenta? <a href="#" id="show-register">Regístrate</a></p>
-    </section>
+    <main>
+        <!-- Login -->
+        <section id="login-section">
+            <h2>Iniciar Sesión</h2>
+            <input type="email" id="login-email" placeholder="Correo">
+            <input type="password" id="login-password" placeholder="Contraseña">
+            <button id="login-btn">Iniciar Sesión</button>
+            <p>¿No tienes cuenta? <a href="#" id="show-register">Regístrate aquí</a></p>
+        </section>
 
-    <!-- REGISTER -->
-    <section id="register-section" style="display: none;">
-        <h2>Registrarse</h2>
-        <input type="email" id="register-email" placeholder="Correo electrónico">
-        <input type="password" id="register-password" placeholder="Contraseña">
-        <button id="register-btn">Registrarse</button>
-        <p>¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a></p>
-    </section>
+        <!-- Registro -->
+        <section id="register-section" style="display: none;">
+            <h2>Registro</h2>
+            <input type="email" id="register-email" placeholder="Correo">
+            <input type="password" id="register-password" placeholder="Contraseña">
+            <button id="register-btn">Registrarse</button>
+            <p>¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a></p>
+        </section>
 
-    <!-- CLASIFICACIÓN -->
-    <main id="classification-section" style="display: none;">
-        <button id="logout-btn">Cerrar sesión</button>
-        <h2>Clasificación de Residuos</h2>
-        <video id="camera" autoplay playsinline></video>
-        <button id="capture-btn">Clasificar Material</button>
-        <p id="classification-result">Resultado: -</p>
-        <p id="bin-suggestion">Sugerencia: -</p>
+        <!-- Clasificación -->
+        <section id="classification-section" style="display: none;">
+            <h2>Clasificación de Residuos</h2>
+            <video id="camera" autoplay playsinline></video>
+            <button id="capture-btn">Clasificar Material</button>
+            <p id="classification-result">Resultado: -</p>
+            <p id="bin-suggestion">Sugerencia: -</p>
+            <button id="logout-btn">Cerrar sesión</button>
+        </section>
     </main>
 
 </body>
