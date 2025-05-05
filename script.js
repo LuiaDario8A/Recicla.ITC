@@ -1,4 +1,4 @@
-// Configuración de Firebase
+// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyCfq6YcNfAfExWw3ChPDREw8U3oAKfKcSw",
     authDomain: "proyecto-rec-c048c.firebaseapp.com",
@@ -14,49 +14,51 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-// UI Elements
 const loginSection = document.getElementById("login-section");
 const registerSection = document.getElementById("register-section");
 const classificationSection = document.getElementById("classification-section");
-const loginBtn = document.getElementById("login-btn");
-const registerBtn = document.getElementById("register-btn");
-const logoutBtn = document.getElementById("logout-btn");
 
-// Eventos de cambio entre login y registro
-document.getElementById("show-register").addEventListener("click", () => {
+document.getElementById("show-register").onclick = () => {
     loginSection.style.display = "none";
     registerSection.style.display = "block";
-});
-document.getElementById("show-login").addEventListener("click", () => {
+};
+
+document.getElementById("show-login").onclick = () => {
     registerSection.style.display = "none";
     loginSection.style.display = "block";
-});
+};
 
-// Registro
-registerBtn.addEventListener("click", () => {
+document.getElementById("register-btn").onclick = () => {
     const email = document.getElementById("register-email").value;
     const password = document.getElementById("register-password").value;
+
     auth.createUserWithEmailAndPassword(email, password)
         .then(() => {
-            alert("Registrado correctamente");
+            registerSection.style.display = "none";
+            classificationSection.style.display = "block";
         })
         .catch(error => alert(error.message));
-});
+};
 
-// Login
-loginBtn.addEventListener("click", () => {
+document.getElementById("login-btn").onclick = () => {
     const email = document.getElementById("login-email").value;
     const password = document.getElementById("login-password").value;
+
     auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+            loginSection.style.display = "none";
+            classificationSection.style.display = "block";
+        })
         .catch(error => alert(error.message));
-});
+};
 
-// Logout
-logoutBtn.addEventListener("click", () => {
-    auth.signOut();
-});
+document.getElementById("logout-btn").onclick = () => {
+    auth.signOut().then(() => {
+        classificationSection.style.display = "none";
+        loginSection.style.display = "block";
+    });
+};
 
-// Auth state
 auth.onAuthStateChanged(user => {
     if (user) {
         loginSection.style.display = "none";
@@ -69,60 +71,53 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// Activar cámara
+// Cámara
 const video = document.getElementById("camera");
-navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-        video.srcObject = stream;
-    })
-    .catch(err => {
-        console.error("Error al acceder a la cámara:", err);
-    });
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(stream => { video.srcObject = stream; })
+    .catch(err => console.error("Cámara no disponible:", err));
 
-// Teachable Machine
-const modelURL = "https://teachablemachine.withgoogle.com/models/Bd2P5VBit/";
-let model, webcam, labelContainer, maxPredictions;
+// Teachable Machine Model
+const URL = "https://teachablemachine.withgoogle.com/models/Bd2P5VBit/";
+let model, webcam, maxPredictions;
 
 async function loadModel() {
-    const URL = modelURL;
-    const modelURLJSON = URL + "model.json";
+    const modelURL = URL + "model.json";
     const metadataURL = URL + "metadata.json";
-
-    model = await tmImage.load(modelURLJSON, metadataURL);
-    console.log("Modelo cargado");
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
 }
 loadModel();
 
-document.getElementById("capture-btn").addEventListener("click", async () => {
+// Clasificación
+async function classifyImage() {
     if (!model) {
         alert("El modelo aún no se ha cargado.");
         return;
     }
 
-    // Crear un canvas y capturar frame de video
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext("2d").drawImage(video, 0, 0);
-
-    // Clasificar imagen
     const prediction = await model.predict(canvas);
-    const sorted = prediction.sort((a, b) => b.probability - a.probability);
-    const best = sorted[0];
 
-    const material = best.className;
-    const result = document.getElementById("classification-result");
-    const suggestion = document.getElementById("bin-suggestion");
+    let topPrediction = prediction[0];
+    for (let i = 1; i < prediction.length; i++) {
+        if (prediction[i].probability > topPrediction.probability) {
+            topPrediction = prediction[i];
+        }
+    }
 
-    result.textContent = `Resultado: ${material}`;
+    const material = topPrediction.className;
     let bin = "Desconocido";
     if (material === "Papel") bin = "Papel";
     else if (material === "Plástico") bin = "Plásticos";
     else if (material === "Metal") bin = "Metales";
 
-    suggestion.textContent = `Bótalo en: ${bin}`;
+    document.getElementById("classification-result").textContent = `Resultado: ${material}`;
+    document.getElementById("bin-suggestion").textContent = `Bótalo en: ${bin}`;
 
-    // Guardar en Firebase
     const user = auth.currentUser;
     if (user) {
         const ref = db.ref(`usuarios/${user.uid}/residuos`).push();
@@ -132,4 +127,7 @@ document.getElementById("capture-btn").addEventListener("click", async () => {
             timestamp: new Date().toISOString()
         });
     }
-});
+}
+
+document.getElementById("capture-btn").addEventListener("click", classifyImage);
+
