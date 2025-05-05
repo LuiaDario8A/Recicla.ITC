@@ -23,7 +23,7 @@ h1 {
     color: #155724;
 }
 
-main {
+main, section {
     background-color: white;
     padding: 20px;
     border-radius: 10px;
@@ -59,4 +59,3 @@ button:hover {
     font-weight: bold;
     margin-top: 10px;
 }
-
