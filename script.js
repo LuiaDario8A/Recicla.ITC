@@ -1,26 +1,97 @@
-let model, maxPredictions;
-let modelLoaded = false; // 🔴 NUEVO: Control de carga
+// Firebase Config
+const firebaseConfig = {
+    apiKey: "AIzaSyCfq6YcNfAfExWw3ChPDREw8U3oAKfKcSw",
+    authDomain: "proyecto-rec-c048c.firebaseapp.com",
+    databaseURL: "https://proyecto-rec-c048c-default-rtdb.firebaseio.com",
+    projectId: "proyecto-rec-c048c",
+    storageBucket: "proyecto-rec-c048c.appspot.com",
+    messagingSenderId: "369525260052",
+    appId: "1:369525260052:web:f376ed49de8e04e79d4c01",
+    measurementId: "G-9WSCEYMJKW"
+};
 
-const classifyBtn = document.getElementById("capture-btn");
-classifyBtn.disabled = true; // 🔴 Desactiva botón hasta que se cargue el modelo
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+const loginSection = document.getElementById("login-section");
+const registerSection = document.getElementById("register-section");
+const classificationSection = document.getElementById("classification-section");
+
+document.getElementById("show-register").onclick = () => {
+    loginSection.style.display = "none";
+    registerSection.style.display = "block";
+};
+
+document.getElementById("show-login").onclick = () => {
+    registerSection.style.display = "none";
+    loginSection.style.display = "block";
+};
+
+document.getElementById("register-btn").onclick = () => {
+    const email = document.getElementById("register-email").value;
+    const password = document.getElementById("register-password").value;
+
+    auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+            registerSection.style.display = "none";
+            classificationSection.style.display = "block";
+        })
+        .catch(error => alert(error.message));
+};
+
+document.getElementById("login-btn").onclick = () => {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
+
+    auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+            loginSection.style.display = "none";
+            classificationSection.style.display = "block";
+        })
+        .catch(error => alert(error.message));
+};
+
+document.getElementById("logout-btn").onclick = () => {
+    auth.signOut().then(() => {
+        classificationSection.style.display = "none";
+        loginSection.style.display = "block";
+    });
+};
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        loginSection.style.display = "none";
+        registerSection.style.display = "none";
+        classificationSection.style.display = "block";
+    } else {
+        loginSection.style.display = "block";
+        registerSection.style.display = "none";
+        classificationSection.style.display = "none";
+    }
+});
+
+// Cámara
+const video = document.getElementById("camera");
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(stream => { video.srcObject = stream; })
+    .catch(err => console.error("Cámara no disponible:", err));
+
+// Teachable Machine Model
+const URL = "https://teachablemachine.withgoogle.com/models/Bd2P5VBit/";
+let model, webcam, maxPredictions;
 
 async function loadModel() {
-    try {
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
-        modelLoaded = true;
-        classifyBtn.disabled = false; // ✅ Activa el botón al cargar
-        console.log("✅ Modelo cargado correctamente");
-    } catch (error) {
-        console.error("❌ Error cargando el modelo:", error);
-    }
+    const modelURL = URL + "model.json";
+    const metadataURL = URL + "metadata.json";
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
 }
 loadModel();
 
+// Clasificación
 async function classifyImage() {
-    if (!modelLoaded) {
+    if (!model) {
         alert("El modelo aún no se ha cargado.");
         return;
     }
@@ -58,6 +129,6 @@ async function classifyImage() {
     }
 }
 
-classifyBtn.addEventListener("click", classifyImage);
+document.getElementById("capture-btn").addEventListener("click", classifyImage);
 
 
